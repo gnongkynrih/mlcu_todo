@@ -1,79 +1,67 @@
 import {
-  ButtonGroup,
-  Button,
-  TextField,
-  Stack,
-  Typography,
   Box,
+  Button,
+  Chip,
+  IconButton,
+  InputAdornment,
+  Modal,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
   FormControlLabel,
   Switch,
-  Paper,
-  Modal,
 } from "@mui/material";
-import axios from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { todoSchema } from "../schemas/todoSchema";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { api } from "../api/client";
+import SearchIcon from "@mui/icons-material/Search";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import AddTaskIcon from "@mui/icons-material/AddTask";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
-
-function Todo() {
+export default function Todo() {
   const [todos, setTodos] = useState([]);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [search, setSearch] = useState("");
 
+  const searchTodos = useCallback((task) => {
+    api
+      .get("/todos/search", { params: { task } })
+      .then((res) => setTodos(res.data))
+      .catch((err) => console.error("Search failed", err));
+  }, []);
+
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearch(value);
     searchTodos(value);
   };
+
   const handleOpenDeleteModal = (id) => {
     setSelectedId(id);
     setOpenDeleteModal(true);
   };
+
   const handleCloseDeleteModal = () => {
     setSelectedId(null);
     setOpenDeleteModal(false);
   };
 
-  const searchTodos = (task) => {
-    try {
-      axios
-        .get(`http://localhost:8000/todos/search?task=${task}`)
-        .then((res) => {
-          setTodos(res.data);
-        });
-    } catch (err) {
-      console.error("Search failed", err);
-    }
-  };
-  // Fetching data - only on mount
-  const fetchTodos = () => {
-    try {
-      axios.get("http://localhost:8000/todos/get-todos").then((res) => {
-        setTodos(res.data);
-      });
-    } catch (err) {
-      console.error("Fetch failed", err);
-    }
-  };
+  const fetchTodos = useCallback(() => {
+    api
+      .get("/todos/get-todos")
+      .then((res) => setTodos(res.data))
+      .catch((err) => console.error("Fetch failed", err));
+  }, []);
 
   useEffect(() => {
     fetchTodos();
-  }, []); // Empty dependency array to prevent infinite loops
+  }, [fetchTodos]);
 
   const {
     control,
@@ -87,216 +75,294 @@ function Todo() {
 
   const onSubmit = async (data) => {
     try {
-      if (isEditing == false) {
-        await axios.post("http://localhost:8000/todos/save", data);
+      if (!isEditing) {
+        await api.post("/todos/save", data);
       } else {
-        await axios.put(`http://localhost:8000/todos/${selectedId}`, data);
+        await api.put(`/todos/${selectedId}`, data);
       }
-      reset({
-        title: "",
-        description: "",
-        is_completed: false,
-      }); // Clear form
-      fetchTodos(); // Refresh list
+      reset({ title: "", description: "", is_completed: false });
+      fetchTodos();
       setIsEditing(false);
       setSelectedId(null);
     } catch (error) {
-      console.error("Failed to create todo:", error);
+      console.error("Save todo failed:", error);
     }
   };
 
   const deleteTodo = async () => {
     try {
-      await axios.delete(`http://localhost:8000/todos/${selectedId}`);
-      // await axios.delete('http://localhost:8000/delete-todo/' + selectedId);
+      await api.delete(`/todos/${selectedId}`);
       setOpenDeleteModal(false);
-      fetchTodos(); // Refresh list
+      fetchTodos();
     } catch (error) {
-      console.error("Failed to delete todo:", error);
+      console.error("Delete failed:", error);
     }
   };
 
   const editTodo = async (id) => {
     try {
-      const response = await axios.get(`http://localhost:8000/todos/${id}`);
-      const todo = response.data;
-      // Populate form with fetched data
+      const { data: todo } = await api.get(`/todos/${id}`);
       reset({
         title: todo.title,
         description: todo.description || "",
         is_completed: todo.is_completed,
       });
       setIsEditing(true);
-      setSelectedId(id); // Track which todo is being edited
+      setSelectedId(id);
     } catch (error) {
-      console.error("Failed to fetch todo:", error);
+      console.error("Load todo failed:", error);
     }
   };
+
   return (
     <>
-      <Box sx={{ p: 4, minHeight: "100vh", bgcolor: "#fff" }}>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* LEFT COLUMN: Input Form */}
-          <div className="lg:col-span-4">
-            <Paper
-              elevation={0}
-              sx={{ p: 3, borderRadius: 0, border: "1px solid #e5e5e5" }}
-            >
-              <Typography
-                variant="h6"
-                sx={{ mb: 3, fontWeight: 400, color: "#333" }}
-              >
-                New Task
+      <Stack spacing={3}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 750, letterSpacing: "-0.03em" }}>
+            Tasks
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Capture work, track completion, and search across titles in real time.
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "380px 1fr" },
+            gap: { xs: 2, md: 3 },
+            alignItems: "start",
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 3 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              background:
+                "linear-gradient(180deg, rgba(124,58,237,0.06), rgba(255,255,255,0) 120px), #fff",
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+              <AddTaskIcon color="secondary" />
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                {isEditing ? "Update task" : "New task"}
               </Typography>
+            </Stack>
 
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <Stack spacing={3}>
-                  <Controller
-                    name="title"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <TextField
-                        fullWidth
-                        label="What needs to be done?"
-                        {...field}
-                        variant="outlined"
-                        error={!!fieldState.error}
-                        helperText={errors.title?.message}
-                      />
-                    )}
-                  />
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <Stack spacing={2}>
+                <Controller
+                  name="title"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      fullWidth
+                      label="Title"
+                      placeholder="What needs to be done?"
+                      {...field}
+                      error={!!fieldState.error}
+                      helperText={errors.title?.message}
+                    />
+                  )}
+                />
 
-                  <Controller
-                    name="description"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={3}
-                        label="Additional details"
-                        {...field}
-                        error={!!fieldState.error}
-                        helperText={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                  {/* is Completed using switch */}
-                  <Controller
-                    name="is_completed"
-                    control={control}
-                    render={({ field }) => (
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            {...field}
-                            checked={field.value}
-                            onChange={(e) => field.onChange(e.target.checked)}
-                          />
-                        }
-                        label="Completed"
-                      />
-                    )}
-                  />
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      label="Details"
+                      placeholder="Context, links, or notes"
+                      {...field}
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="is_completed"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      }
+                      label="Mark as done"
+                    />
+                  )}
+                />
+
+                <Stack direction="row" spacing={1}>
+                  {isEditing ? (
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setSelectedId(null);
+                        reset({ title: "", description: "", is_completed: false });
+                      }}
+                    >
+                      Cancel edit
+                    </Button>
+                  ) : null}
                   <Button
-                    fullWidth
-                    variant="outlined"
                     type="submit"
-                    size="large"
+                    variant="contained"
+                    fullWidth={!isEditing}
                     sx={{
-                      py: 1.5,
-                      borderRadius: 0,
-                      textTransform: "none",
-                      color: "#333",
-                      borderColor: "#333",
-                      "&:hover": { bgcolor: "#333", color: "#fff" },
+                      flex: 1,
+                      py: 1.1,
+                      background: "linear-gradient(90deg, #7c3aed, #a855f7)",
+                      boxShadow: "0 12px 30px rgba(124,58,237,0.28)",
                     }}
                   >
-                    {isEditing ? "Update" : "Save"}
+                    {isEditing ? "Save changes" : "Add to list"}
                   </Button>
                 </Stack>
-              </form>
-            </Paper>
-          </div>
+              </Stack>
+            </form>
+          </Paper>
 
-          {/* RIGHT COLUMN: Task List */}
-          <div className="lg:col-span-8">
-            <Box sx={{ mb: 3, pb: 1, borderBottom: "2px solid #333" }}>
-              <TextField
-                value={search}
-                onChange={handleSearchChange}
-                name="search"
-                label="Search"
-                variant="outlined"
-                size="small"
-                sx={{ width: "100%" }}
-              />
+          <Stack spacing={2}>
+            <TextField
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Search titles"
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                maxWidth: 440,
+                bgcolor: "background.paper",
+              }}
+            />
 
-              <Typography variant="h6" sx={{ fontWeight: 400, color: "#333" }}>
-                Tasks ({todos.length})
-              </Typography>
-            </Box>
+            <Stack spacing={1.25}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="subtitle1" fontWeight={700}>
+                  In progress
+                </Typography>
+                <Chip label={`${todos.length} total`} size="small" />
+              </Stack>
 
-            <Stack spacing={1}>
-              {todos.map((todo) => (
-                <Box
-                  key={todo.id}
-                  sx={{
-                    py: 1.5,
-                    borderBottom: "1px solid #e5e5e5",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="body1" sx={{ color: "#333" }}>
-                    {todo.title}
-                  </Typography>
-                  <Typography
-                    variant="caption"
+              <Stack spacing={1}>
+                {todos.map((todo) => (
+                  <Paper
+                    key={todo.id}
+                    variant="outlined"
                     sx={{
-                      color: todo.is_completed ? "#666" : "#999",
-                      fontStyle: todo.is_completed ? "normal" : "italic",
+                      p: 2,
+                      borderRadius: 2,
+                      borderColor: todo.is_completed ? "success.light" : "divider",
+                      bgcolor: todo.is_completed ? "rgba(22,163,74,0.05)" : "background.paper",
+                      transition: "border-color 160ms ease, box-shadow 160ms ease",
+                      "&:hover": {
+                        borderColor: "secondary.light",
+                        boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
+                      },
                     }}
                   >
-                    {todo.is_completed ? "Done" : "Pending"}
-                  </Typography>
-                  <ButtonGroup variant="text" aria-label="Basic button group">
-                    <Button onClick={() => editTodo(todo.id)}>Edit</Button>
-                    <Button onClick={() => handleOpenDeleteModal(todo.id)}>
-                      Delete
-                    </Button>
-                  </ButtonGroup>
-                </Box>
-              ))}
-            </Stack>
-          </div>
-        </div>
-      </Box>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1.5}
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      justifyContent="space-between"
+                    >
+                      <Box sx={{ flex: 1, textAlign: "left" }}>
+                        <Typography fontWeight={700}>{todo.title}</Typography>
+                        {todo.description ? (
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {todo.description}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: "flex-end" }}
+                      >
+                        <Chip
+                          label={todo.is_completed ? "Done" : "Open"}
+                          color={todo.is_completed ? "success" : "default"}
+                          size="small"
+                          sx={{ fontWeight: 700 }}
+                        />
+                        <IconButton
+                          size="small"
+                          aria-label="Edit todo"
+                          onClick={() => editTodo(todo.id)}
+                        >
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          aria-label="Delete todo"
+                          onClick={() => handleOpenDeleteModal(todo.id)}
+                        >
+                          <DeleteOutlineOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
 
-      <Modal
-        open={openDeleteModal}
-        onClose={handleCloseDeleteModal}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Delete Task
-          </Typography>
-          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            Are you sure you want to delete this task?
-          </Typography>
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-            <Button onClick={handleCloseDeleteModal}>Cancel</Button>
-            <Button onClick={deleteTodo} variant="contained">
-              Yes, Delete
-            </Button>
-          </Box>
+              {todos.length === 0 ? (
+                <Paper variant="outlined" sx={{ p: 4, borderRadius: 2, textAlign: "center" }}>
+                  <Typography color="text.secondary">
+                    No tasks yet — add one on the left or adjust your search.
+                  </Typography>
+                </Paper>
+              ) : null}
+            </Stack>
+          </Stack>
         </Box>
+      </Stack>
+
+      <Modal open={openDeleteModal} onClose={handleCloseDeleteModal}>
+        <Paper
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "min(420px, calc(100vw - 32px))",
+            p: 3,
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" fontWeight={700}>
+            Delete task?
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1.5 }}>
+            This cannot be undone. The task will be removed from your list.
+          </Typography>
+          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 3 }}>
+            <Button onClick={handleCloseDeleteModal}>Cancel</Button>
+            <Button variant="contained" color="error" onClick={deleteTodo}>
+              Delete
+            </Button>
+          </Stack>
+        </Paper>
       </Modal>
     </>
   );
 }
-
-export default Todo;

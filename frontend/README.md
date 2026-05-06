@@ -27,3 +27,14 @@ in index.css, add:
 
 for api calls
 npm install axios
+
+for RBAC (backend)
+npm install bcryptjs jsonwebtoken
+//bcryptjs for hashing passwords before storing them.
+//jsonwebtoken for JWT-based auth.
+
+After updating the schema, run:
+npx prisma migrate dev --name add_user_and_relations
+
+Generate Prisma Client
+npx prisma generate

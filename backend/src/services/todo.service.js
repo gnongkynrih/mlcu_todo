@@ -1,24 +1,30 @@
 const prisma = require("../lib/prisma");
 
-const getAllTodos = async () => {
+const getAllTodos = async (userId) => {
   return prisma.todo.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
   });
 };
 
-const createTodo = async (data) => {
+const createTodo = async (data, userId) => {
   return prisma.todo.create({
     data: {
       title: data.title,
       description: data.description || null,
       is_completed: data.is_completed ?? false,
+      userId,
     },
   });
 };
 
-//update todo
-const updateTodo = async (id, data) => {
+const updateTodo = async (id, data, userId) => {
   try {
+    const existing = await prisma.todo.findFirst({
+      where: { id: parseInt(id), userId },
+    });
+    if (!existing) throw new Error("Todo not found");
+
     const { title, description, is_completed } = data;
     const todo = await prisma.todo.update({
       where: {
@@ -37,12 +43,12 @@ const updateTodo = async (id, data) => {
   }
 };
 
-//get todo by id
-const getTodoById = async (id) => {
+const getTodoById = async (id, userId) => {
   try {
-    const todo = await prisma.todo.findUnique({
+    const todo = await prisma.todo.findFirst({
       where: {
         id: parseInt(id),
+        userId,
       },
     });
     return todo;
@@ -51,9 +57,13 @@ const getTodoById = async (id) => {
   }
 };
 
-//Delete a task
-const deleteTodo = async (id) => {
+const deleteTodo = async (id, userId) => {
   try {
+    const existing = await prisma.todo.findFirst({
+      where: { id: parseInt(id), userId },
+    });
+    if (!existing) throw new Error("Todo not found");
+
     const todo = await prisma.todo.delete({
       where: {
         id: parseInt(id),
@@ -65,13 +75,14 @@ const deleteTodo = async (id) => {
   }
 };
 
-const searchTodos = async (task) => {
+const searchTodos = async (task, userId) => {
   try {
     if (!task) {
-      return getAllTodos();
+      return getAllTodos(userId);
     }
     const todos = await prisma.todo.findMany({
       where: {
+        userId,
         title: {
           contains: task,
         },

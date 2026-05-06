@@ -7,8 +7,11 @@ const {
   deleteTodo,
   searchTodos,
 } = require("../controllers/todo.controller");
+const { authMiddleware } = require("../middleware/auth");
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 router.get("/get-todos", getTodos);
 router.get("/search", searchTodos);
