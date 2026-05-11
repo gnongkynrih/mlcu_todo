@@ -6,6 +6,8 @@ const {
   getTodoById,
   deleteTodo,
   searchTodos,
+  getTodosByDateRange,
+  exportTodosToExcel,
 } = require("../controllers/todo.controller");
 const { authMiddleware } = require("../middleware/auth");
 
@@ -15,6 +17,8 @@ router.use(authMiddleware);
 
 router.get("/get-todos", getTodos);
 router.get("/search", searchTodos);
+router.get("/date-range", getTodosByDateRange);
+router.get("/export-excel", exportTodosToExcel);
 router.post("/save", addTodo);
 router.put("/:id", updateTodo);
 router.get("/:id", getTodoById);

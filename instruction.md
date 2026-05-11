@@ -1,4 +1,3 @@
-
 This document summarizes what this project implements so you can walk students through **role-based access control (RBAC)**, the **User** domain, and the **Todo** domain, and how they connect in the API and React app.
 
 ---
@@ -11,10 +10,10 @@ Not every authenticated user should call every endpoint. **Authentication** answ
 
 ### Roles in this project
 
-| Role    | Typical use |
-|---------|-------------|
+| Role    | Typical use                                                  |
+| ------- | ------------------------------------------------------------ |
 | `admin` | Can manage **users** (list, create, update, delete, search). |
-| `user`  | Can use **todos** for their own account only. |
+| `user`  | Can use **todos** for their own account only.                |
 
 Roles are stored on the `User` model in the database (`role`, default `"user"`). The **first** account can be created as `admin` via a one-time bootstrap flow (see Users below).
 
@@ -25,15 +24,15 @@ Roles are stored on the `User` model in the database (`role`, default `"user"`).
    - `sub` — the user’s numeric **id** (we attach it as `req.userId` in middleware).
    - `role` — `"admin"` or `"user"` (we attach it as `req.userRole`).
 
-2. **`authMiddleware`** (`backend/src/middleware/auth.js`)  
-   - Expects header: `Authorization: Bearer <token>`.  
-   - Verifies the signature and expiry.  
-   - Sets `req.userId` and `req.userRole` for downstream handlers.  
+2. **`authMiddleware`** (`backend/src/middleware/auth.js`)
+   - Expects header: `Authorization: Bearer <token>`.
+   - Verifies the signature and expiry.
+   - Sets `req.userId` and `req.userRole` for downstream handlers.
    - If the token is missing or invalid → **401 Unauthorized**.
 
-3. **`requireAdmin`** (same file)  
-   - Runs **after** `authMiddleware`.  
-   - If `req.userRole !== "admin"` → **403 Forbidden** (authenticated, but not allowed).  
+3. **`requireAdmin`** (same file)
+   - Runs **after** `authMiddleware`.
+   - If `req.userRole !== "admin"` → **403 Forbidden** (authenticated, but not allowed).
    - Students should distinguish **401** (not logged in / bad token) from **403** (logged in, wrong role).
 
 ### Route layout (mental model)
@@ -72,32 +71,32 @@ Defined in **`backend/prisma/schema.prisma`**:
 
 ### Passwords
 
-- **`bcrypt`** hashes passwords on create/update (`backend/src/services/user.service.js`).  
-- Plain passwords are **never** stored.  
+- **`bcrypt`** hashes passwords on create/update (`backend/src/services/user.service.js`).
+- Plain passwords are **never** stored.
 - Responses use a small helper to strip `password` before sending JSON (`dontReturnPassword` in the user controller).
 
 ### Public user endpoints
 
-| Method & path | Purpose |
-|---------------|---------|
-| `GET /users/setup-status` | Returns `{ needsBootstrap: true }` if there are zero users so the UI can show “create first admin.” |
+| Method & path                       | Purpose                                                                                                                                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /users/setup-status`           | Returns `{ needsBootstrap: true }` if there are zero users so the UI can show “create first admin.”                                                                                 |
 | `POST /users/bootstrap-first-admin` | Creates the **first** user as **`admin`** if the table is empty; returns `token` + `user` (same shape as login) so the client can start sending authenticated requests immediately. |
-| `POST /users/login` | Body: `{ email, password }`. Validates credentials; returns `token` + `user` (no password). |
+| `POST /users/login`                 | Body: `{ email, password }`. Validates credentials; returns `token` + `user` (no password).                                                                                         |
 
 ### Admin-only user endpoints
 
 All of these run after **`authMiddleware`** and **`requireAdmin`** on the router (`backend/src/routes/user.route.js`):
 
-- `GET /users/get-users` — list users  
-- `GET /users/search?task=…` — search by name (backend implementation)  
-- `POST /users/save` — create user  
-- `PUT /users/edit/:id` — update user (password optional; only hashed if a new password is provided)  
-- `GET /users/view/:id` — fetch one user  
-- `DELETE /users/delete/:id` — delete user  
+- `GET /users/get-users` — list users
+- `GET /users/search?task=…` — search by name (backend implementation)
+- `POST /users/save` — create user
+- `PUT /users/edit/:id` — update user (password optional; only hashed if a new password is provided)
+- `GET /users/view/:id` — fetch one user
+- `DELETE /users/delete/:id` — delete user
 
 ### Frontend pages
 
-- **`Login.jsx`** — loads setup status; either first-time admin form or normal sign-in; uses **`AuthContext`**.  
+- **`Login.jsx`** — loads setup status; either first-time admin form or normal sign-in; uses **`AuthContext`**.
 - **`UserManagement.jsx`** — admin CRUD UI; calls the `/users/...` endpoints above.
 
 ---
@@ -112,8 +111,8 @@ All of these run after **`authMiddleware`** and **`requireAdmin`** on the router
 
 The todo **service** (`backend/src/services/todo.service.js`) filters and checks **`userId`**:
 
-- **List / search** only returns todos where `userId` matches the authenticated user.  
-- **Create** sets `userId` from the server (from JWT), not blindly from the request body (students should understand **never trusting** client-supplied ownership ids without checks).  
+- **List / search** only returns todos where `userId` matches the authenticated user.
+- **Create** sets `userId` from the server (from JWT), not blindly from the request body (students should understand **never trusting** client-supplied ownership ids without checks).
 - **Get / update / delete** verify the todo belongs to that user (otherwise “not found” or error).
 
 Controllers pass **`req.userId`** from `authMiddleware` into the service (`backend/src/controllers/todo.controller.js`).
@@ -122,33 +121,87 @@ Controllers pass **`req.userId`** from `authMiddleware` into the service (`backe
 
 All mounted under **`/todos`** with **`authMiddleware`** applied to the whole router (`backend/src/routes/todo.route.js`):
 
-- `GET /todos/get-todos`  
-- `GET /todos/search?task=…`  
-- `POST /todos/save`  
-- `GET /todos/:id`  
-- `PUT /todos/:id`  
-- `DELETE /todos/:id`  
+- `GET /todos/get-todos`
+- `GET /todos/search?task=…`
+- `POST /todos/save`
+- `GET /todos/:id`
+- `PUT /todos/:id`
+- `DELETE /todos/:id`
 
 ### Frontend
 
-- **`Todo.jsx`** uses the shared **`api`** client so every calls carries the JWT.  
+- **`Todo.jsx`** uses the shared **`api`** client so every calls carries the JWT.
 - Students can trace: **login** → **token** → **axios interceptor** → **todos filtered by** `userId` **on the server**.
 
 ---
 
-## 4. Suggested teaching order
+## 4. App.jsx (Routing + Protected Routes)
 
-1. **RBAC** — roles, JWT payload, `authMiddleware` vs `requireAdmin`, HTTP 401 vs 403.  
-2. **User** — Prisma `User` model, hashing, public vs admin routes, bootstrap + login story.  
-3. **Todo** — Prisma relation `Todo` → `User`, **`userId` ownership**, and why all todo queries are filtered by `req.userId`.  
-4. **Frontend** — `AuthContext`, protected routes, admin-only navigation, and how the same token unlocks todos for any user but only unlocks user management for admins.
+`App.jsx` implements the **frontend routing layer** that mirrors the backend RBAC structure. It uses React Router v6 with nested layouts and route guards.
+
+### Route Structure
+
+```
+/               → Home (landing page; redirects to /todo if logged in)
+/login          → Login (public; handles bootstrap + sign-in)
+/testing        → Test (public demo page)
+
+Protected parent (requires any JWT)
+├── /todo       → Todo.jsx (any authenticated user)
+└── /users      → UserManagement.jsx (adminOnly route)
+```
+
+### How it enforces RBAC
+
+| Component                   | Purpose                                                                                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ProtectedRoute` (no props) | Wraps routes that need **any valid JWT**. Redirects to `/login` if not authenticated. Used as a parent layout for `/todo` and `/users`. |
+| `ProtectedRoute adminOnly`  | Additional check: if `user.role !== "admin"`, redirects to `/`. Used specifically on `/users`.                                          |
+| `AppLayout`                 | Shows navigation sidebar with **Users** link visible **only when `user.role === "admin"`**.                                             |
+| `Home`                      | Reads `useAuth()`; if `user` exists, auto-redirects to `/todo`.                                                                         |
+
+### Key code patterns
+
+```jsx
+// Parent layout protects all child routes
+<Route
+  element={
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route path="/todo" element={<Todo />} />
+  <Route
+    path="/users"
+    element={
+      <ProtectedRoute adminOnly>
+        <UserManagement />
+      </ProtectedRoute>
+    }
+  />
+</Route>
+```
+
+- **Todos** are accessible to any authenticated user (nested under `ProtectedRoute`).
+- **Users** require both authentication AND admin role (double `ProtectedRoute` wrapper).
+- `AppLayout` displays the sidebar and handles navigation visibility based on role.
+
+---
+
+## 5. Suggested teaching order
+
+1. **RBAC** — roles, JWT payload, `authMiddleware` vs `requireAdmin`, HTTP 401 vs 403.
+2. **User** — Prisma `User` model, hashing, public vs admin routes, bootstrap + login story.
+3. **Todo** — Prisma relation `Todo` → `User`, **`userId` ownership**, and why all todo queries are filtered by `req.userId`.
+4. **Frontend routing (App.jsx)** — how `ProtectedRoute` and `adminOnly` mirror the backend RBAC; nested layouts.
+5. **AuthContext + API client** — token storage, axios interceptors, and automatic header injection.
 
 ---
 
 ## 5. Configuration reminder
 
-- **`DATABASE_URL`** — required for Prisma/MySQL.  
+- **`DATABASE_URL`** — required for Prisma/MySQL.
 - **`JWT_SECRET`** — set a strong secret in production (see `backend/src/middleware/auth.js`); the default string is only for local development.
 
 This matches the code under `backend/src` (Express + Prisma) and `frontend/src` (React + MUI + React Router).
-

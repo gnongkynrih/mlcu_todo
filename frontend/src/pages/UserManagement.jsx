@@ -132,7 +132,9 @@ function UserUpsertDialog({ open, editingId, onClose, onSaved }) {
                   error={!!fieldState.error}
                   helperText={
                     fieldState.error?.message ||
-                    (isEditing ? "Leave blank to keep the current password." : "")
+                    (isEditing
+                      ? "Leave blank to keep the current password."
+                      : "")
                   }
                 />
               )}
@@ -227,11 +229,15 @@ export default function UserManagement() {
         }}
       >
         <div>
-          <Typography variant="h4" sx={{ fontWeight: 750, letterSpacing: "-0.03em" }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 750, letterSpacing: "-0.03em" }}
+          >
             People & access
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-            Create accounts, assign roles, and keep emails unique across the workspace.
+            Create accounts, assign roles, and keep emails unique across the
+            workspace.
           </Typography>
         </div>
         <Button
@@ -309,8 +315,13 @@ export default function UserManagement() {
           </Paper>
         ))}
         {users.length === 0 ? (
-          <Paper variant="outlined" sx={{ p: 4, borderRadius: 2, textAlign: "center" }}>
-            <Typography color="text.secondary">No users match this search.</Typography>
+          <Paper
+            variant="outlined"
+            sx={{ p: 4, borderRadius: 2, textAlign: "center" }}
+          >
+            <Typography color="text.secondary">
+              No users match this search.
+            </Typography>
           </Paper>
         ) : null}
       </Stack>
@@ -330,8 +341,9 @@ export default function UserManagement() {
         <DialogTitle>Remove user</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary">
-            This permanently removes the account. Todos owned by this user may be blocked by
-            database constraints until they are reassigned or removed.
+            This permanently removes the account. Todos owned by this user may
+            be blocked by database constraints until they are reassigned or
+            removed.
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -38,3 +38,16 @@ npx prisma migrate dev --name add_user_and_relations
 
 Generate Prisma Client
 npx prisma generate
+
+
+/For Charts we will use react-chart
+https://react-chartjs-2.js.org/
+npm install --save chart.js react-chartjs-2
+
+
+
+export to pdf
+https://github.com/parallax/jsPDF
+https://github.com/simonbengtsson/jsPDF-AutoTable
+
+npm install jspdf jspdf-autotable

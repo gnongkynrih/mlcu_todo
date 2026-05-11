@@ -118,11 +118,15 @@ export default function Todo() {
     <>
       <Stack spacing={3}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 750, letterSpacing: "-0.03em" }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 750, letterSpacing: "-0.03em" }}
+          >
             Tasks
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-            Capture work, track completion, and search across titles in real time.
+            Capture work, track completion, and search across titles in real
+            time.
           </Typography>
         </Box>
 
@@ -145,7 +149,12 @@ export default function Todo() {
                 "linear-gradient(180deg, rgba(124,58,237,0.06), rgba(255,255,255,0) 120px), #fff",
             }}
           >
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mb: 2 }}
+            >
               <AddTaskIcon color="secondary" />
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 {isEditing ? "Update task" : "New task"}
@@ -210,7 +219,11 @@ export default function Todo() {
                       onClick={() => {
                         setIsEditing(false);
                         setSelectedId(null);
-                        reset({ title: "", description: "", is_completed: false });
+                        reset({
+                          title: "",
+                          description: "",
+                          is_completed: false,
+                        });
                       }}
                     >
                       Cancel edit
@@ -254,7 +267,11 @@ export default function Todo() {
             />
 
             <Stack spacing={1.25}>
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
                 <Typography variant="subtitle1" fontWeight={700}>
                   In progress
                 </Typography>
@@ -269,9 +286,14 @@ export default function Todo() {
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      borderColor: todo.is_completed ? "success.light" : "divider",
-                      bgcolor: todo.is_completed ? "rgba(22,163,74,0.05)" : "background.paper",
-                      transition: "border-color 160ms ease, box-shadow 160ms ease",
+                      borderColor: todo.is_completed
+                        ? "success.light"
+                        : "divider",
+                      bgcolor: todo.is_completed
+                        ? "rgba(22,163,74,0.05)"
+                        : "background.paper",
+                      transition:
+                        "border-color 160ms ease, box-shadow 160ms ease",
                       "&:hover": {
                         borderColor: "secondary.light",
                         boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
@@ -287,7 +309,11 @@ export default function Todo() {
                       <Box sx={{ flex: 1, textAlign: "left" }}>
                         <Typography fontWeight={700}>{todo.title}</Typography>
                         {todo.description ? (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5 }}
+                          >
                             {todo.description}
                           </Typography>
                         ) : null}
@@ -296,7 +322,10 @@ export default function Todo() {
                         direction="row"
                         spacing={1}
                         alignItems="center"
-                        sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: "flex-end" }}
+                        sx={{
+                          width: { xs: "100%", sm: "auto" },
+                          justifyContent: "flex-end",
+                        }}
                       >
                         <Chip
                           label={todo.is_completed ? "Done" : "Open"}
@@ -326,7 +355,10 @@ export default function Todo() {
               </Stack>
 
               {todos.length === 0 ? (
-                <Paper variant="outlined" sx={{ p: 4, borderRadius: 2, textAlign: "center" }}>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 4, borderRadius: 2, textAlign: "center" }}
+                >
                   <Typography color="text.secondary">
                     No tasks yet — add one on the left or adjust your search.
                   </Typography>
@@ -355,7 +387,12 @@ export default function Todo() {
           <Typography color="text.secondary" sx={{ mt: 1.5 }}>
             This cannot be undone. The task will be removed from your list.
           </Typography>
-          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 3 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent="flex-end"
+            sx={{ mt: 3 }}
+          >
             <Button onClick={handleCloseDeleteModal}>Cancel</Button>
             <Button variant="contained" color="error" onClick={deleteTodo}>
               Delete

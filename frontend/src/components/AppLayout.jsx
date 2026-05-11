@@ -9,6 +9,8 @@ import {
 import { Link as RouterLink, Outlet, useNavigate } from "react-router-dom";
 import ChecklistRtlIcon from "@mui/icons-material/ChecklistRtl";
 import GroupIcon from "@mui/icons-material/Group";
+import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../context/AuthContext";
 
@@ -59,18 +61,41 @@ export function AppLayout() {
           >
             Todos
           </Button>
+          <Button
+            component={RouterLink}
+            to="/reports"
+            startIcon={<AssessmentIcon />}
+            color="inherit"
+            sx={{ textTransform: "none" }}
+          >
+            Reports
+          </Button>
           {isAdmin ? (
-            <Button
-              component={RouterLink}
-              to="/users"
-              startIcon={<GroupIcon />}
-              color="inherit"
-              sx={{ textTransform: "none" }}
-            >
-              Users
-            </Button>
+            <>
+              <Button
+                component={RouterLink}
+                to="/dashboard"
+                startIcon={<SpaceDashboardOutlinedIcon />}
+                color="inherit"
+                sx={{ textTransform: "none" }}
+              >
+                Dashboard
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/users"
+                startIcon={<GroupIcon />}
+                color="inherit"
+                sx={{ textTransform: "none" }}
+              >
+                Users
+              </Button>
+            </>
           ) : null}
-          <Typography variant="body2" sx={{ opacity: 0.8, display: { xs: "none", sm: "block" } }}>
+          <Typography
+            variant="body2"
+            sx={{ opacity: 0.8, display: { xs: "none", sm: "block" } }}
+          >
             {user?.name || user?.email}
           </Typography>
           <Button

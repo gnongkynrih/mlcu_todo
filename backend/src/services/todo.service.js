@@ -95,6 +95,66 @@ const searchTodos = async (task, userId) => {
   }
 };
 
+const getTodosByDateRange = async (startDate, endDate) => {
+  try {
+    //select * from todos where createdAt between startdate and enddate
+    const todos = await prisma.todo.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return todos;
+  } catch (error) {
+    console.error("Date range search error:", error);
+    throw new Error("Failed to fetch todos by date range");
+  }
+};
+
+const exportTodosToExcel = async (startDate, endDate) => {
+  try {
+    const ExcelJS = require("exceljs");
+    const todos = await getTodosByDateRange(startDate, endDate);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Todos");
+
+    // Add headers
+    worksheet.columns = [
+      { header: "Title", key: "title", width: 30 },
+      { header: "Description", key: "description", width: 40 },
+      { header: "Status", key: "is_completed", width: 15 },
+      { header: "Created At", key: "createdAt", width: 25 },
+    ];
+
+    // Add data rows
+    todos.forEach((todo) => {
+      worksheet.addRow({
+        title: todo.title,
+        description: todo.description || "",
+        is_completed: todo.is_completed ? "Completed" : "Pending",
+        createdAt: todo.createdAt.toISOString(),
+      });
+    });
+
+    // Style the header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    return workbook;
+  } catch (error) {
+    console.error("Excel export error:", error);
+    throw new Error("Failed to export todos to Excel");
+  }
+};
+
 module.exports = {
   getAllTodos,
   createTodo,
@@ -102,4 +162,6 @@ module.exports = {
   getTodoById,
   deleteTodo,
   searchTodos,
+  getTodosByDateRange,
+  exportTodosToExcel,
 };

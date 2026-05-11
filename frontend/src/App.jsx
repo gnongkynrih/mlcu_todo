@@ -18,6 +18,8 @@ import Todo from "./pages/Todo";
 import Test from "./pages/Test";
 import Login from "./pages/Login";
 import UserManagement from "./pages/UserManagement";
+import Dashboard from "./pages/Dashboard";
+import Reports from "./pages/Reports";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
 import { useAuth } from "./context/AuthContext";
@@ -45,14 +47,23 @@ function Home() {
       justifyContent="center"
       sx={{ py: { xs: 8, md: 12 }, px: 2, textAlign: "center" }}
     >
-      <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: "-0.04em", maxWidth: 640 }}>
+      <Typography
+        variant="h3"
+        sx={{ fontWeight: 800, letterSpacing: "-0.04em", maxWidth: 640 }}
+      >
         Plan work clearly. Ship faster.
       </Typography>
       <Typography color="text.secondary" sx={{ maxWidth: 520 }}>
-        Sign in to manage your tasks. Administrators can invite teammates and control roles from
-        one place.
+        Sign in to manage your tasks. Administrators can invite teammates and
+        control roles from one place.
       </Typography>
-      <Button component={RouterLink} variant="contained" size="large" to="/login" sx={{ px: 4, py: 1.25 }}>
+      <Button
+        component={RouterLink}
+        variant="contained"
+        size="large"
+        to="/login"
+        sx={{ px: 4, py: 1.25 }}
+      >
         Sign in
       </Button>
     </Stack>
@@ -66,7 +77,6 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/testing" element={<Test />} />
           <Route path="/" element={<Home />} />
           <Route
             element={
@@ -76,6 +86,15 @@ function App() {
             }
           >
             <Route path="/todo" element={<Todo />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute adminOnly>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/users"
               element={
