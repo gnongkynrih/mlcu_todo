@@ -4,6 +4,7 @@ require("dotenv").config();
 const todoRoutes = require("./routes/todo.route");
 const userRoutes = require("./routes/user.route");
 const dashboardRoutes = require("./routes/dashboard.route");
+const paymentRoutes = require("./routes/payment.route");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -11,6 +12,7 @@ app.use(express.json());
 app.use("/todos", todoRoutes);
 app.use("/users", userRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

@@ -11,6 +11,7 @@ import ChecklistRtlIcon from "@mui/icons-material/ChecklistRtl";
 import GroupIcon from "@mui/icons-material/Group";
 import SpaceDashboardOutlinedIcon from "@mui/icons-material/SpaceDashboardOutlined";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import PaymentIcon from "@mui/icons-material/Payment";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../context/AuthContext";
 
@@ -69,6 +70,15 @@ export function AppLayout() {
             sx={{ textTransform: "none" }}
           >
             Reports
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/payment"
+            startIcon={<PaymentIcon />}
+            color="inherit"
+            sx={{ textTransform: "none" }}
+          >
+            Payment
           </Button>
           {isAdmin ? (
             <>

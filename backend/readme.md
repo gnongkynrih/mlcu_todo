@@ -15,7 +15,12 @@ whenever we make changes to the prisma schema, we need to run:
 npx prisma migrate dev --name init_todo
 npx prisma generate
 
-
 TO EXPORT TO EXCEL
 https://github.com/exceljs/exceljs#readme
 npm install exceljs
+
+razorpay
+npm install react-razorpay
+https://github.com/piyushgarg-dev/react-razorpay#readme
+
+18141212

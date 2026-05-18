@@ -1,6 +1,6 @@
-# Export Todos to Excel
+# Export Todos to Excel and PDF
 
-This document explains the implementation of the date range filtering and Excel export feature for the Todo application.
+This document explains the implementation of the date range filtering and export features (Excel and PDF) for the Todo application.
 
 ## Overview
 
@@ -9,6 +9,7 @@ The feature allows users to:
 1. Select a date range (start date and end date)
 2. List all todos created within that date range
 3. Export the filtered todos to an Excel file if data is found
+4. Export the filtered todos to a PDF file if data is found
 
 ## Backend Implementation
 
@@ -124,6 +125,10 @@ Both routes are protected by `authMiddleware`, ensuring only authenticated users
   ```bash
   npm install date-fns
   ```
+- **jspdf**: JavaScript library for generating PDF documents
+  ```bash
+  npm install jspdf jspdf-autotable
+  ```
 
 ### Reports Page (`frontend/src/pages/Reports.jsx`)
 
@@ -147,6 +152,7 @@ A Paper component containing:
 - Two DatePicker components (start and end dates)
 - "List" button to fetch todos
 - "Export to Excel" button (conditionally shown when data exists)
+- "Export to PDF" button (conditionally shown when data exists)
 - Results display area showing filtered todos with status and creation dates
 
 ```jsx
@@ -271,6 +277,66 @@ const handleExportToExcel = async () => {
 };
 ```
 
+#### `handleExportToPDF()`
+
+Generates and downloads a PDF file using jsPDF client-side.
+
+1. Validates that both dates are selected and data exists
+2. Formats dates to ISO string (YYYY-MM-DD)
+3. Creates a new jsPDF document
+4. Adds title, date range, and total count
+5. Maps filtered todos to table data (title, description, status, created date)
+6. Uses autoTable to generate a styled table
+7. Saves the PDF with filename based on date range
+
+```javascript
+const handleExportToPDF = () => {
+  if (!startDate || !endDate) {
+    alert("Please select both start and end dates");
+    return;
+  }
+  if (filteredTodos.length === 0) {
+    alert("No todos to export");
+    return;
+  }
+
+  const doc = new jsPDF();
+  const startDateStr = startDate.toISOString().split("T")[0];
+  const endDateStr = endDate.toISOString().split("T")[0];
+
+  // Add title
+  doc.setFontSize(18);
+  doc.text("Todo Report", 14, 20);
+  doc.setFontSize(11);
+  doc.text(`Date Range: ${startDateStr} to ${endDateStr}`, 14, 28);
+  doc.text(`Total Todos: ${filteredTodos.length}`, 14, 34);
+
+  // Prepare table data
+  const tableData = filteredTodos.map((todo) => [
+    todo.title,
+    todo.description || "",
+    todo.is_completed ? "Completed" : "Pending",
+    new Date(todo.createdAt).toLocaleDateString(),
+  ]);
+
+  // Add table
+  autoTable(doc, {
+    head: [["Title", "Description", "Status", "Created At"]],
+    body: tableData,
+    startY: 40,
+    styles: { fontSize: 10, cellPadding: 3 },
+    headStyles: {
+      fillColor: [124, 58, 237],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+    },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+  });
+
+  doc.save(`todos_${startDateStr}_to_${endDateStr}.pdf`);
+};
+```
+
 ### Results Display
 
 The Reports page displays filtered results in a dedicated section:
@@ -328,6 +394,8 @@ To test the feature:
 4. Click "List" to see filtered results
 5. If results exist, click "Export to Excel" to download the file
 6. Verify the Excel file contains the correct data
+7. Click "Export to PDF" to download the PDF file
+8. Verify the PDF file contains the correct data with proper formatting
 
 ## Architecture Notes
 

@@ -20,6 +20,7 @@ import Login from "./pages/Login";
 import UserManagement from "./pages/UserManagement";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
+import Payment from "./pages/Payment";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
 import { useAuth } from "./context/AuthContext";
@@ -87,6 +88,7 @@ function App() {
           >
             <Route path="/todo" element={<Todo />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/payment" element={<Payment />} />
             <Route
               path="/dashboard"
               element={

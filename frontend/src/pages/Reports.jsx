@@ -1,10 +1,4 @@
-import {
-  Box,
-  Button,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -12,6 +6,9 @@ import { useState } from "react";
 import { api } from "../api/client";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Reports() {
   const [startDate, setStartDate] = useState(null);
@@ -58,7 +55,10 @@ export default function Reports() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `todos_${startDateStr}_to_${endDateStr}.xlsx`);
+      link.setAttribute(
+        "download",
+        `todos_${startDateStr}_to_${endDateStr}.xlsx`,
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -66,6 +66,63 @@ export default function Reports() {
     } catch (error) {
       console.error("Excel export failed:", error);
       alert("Failed to export to Excel");
+    }
+  };
+
+  const handleExportToPDF = () => {
+    if (!startDate || !endDate) {
+      alert("Please select both start and end dates");
+      return;
+    }
+    if (filteredTodos.length === 0) {
+      alert("No todos to export");
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const startDateStr = startDate.toISOString().split("T")[0];
+      const endDateStr = endDate.toISOString().split("T")[0];
+
+      // Add title
+      doc.setFontSize(18);
+      doc.text("Todo Report", 80, 20);
+      doc.setFontSize(11);
+      doc.text(`Date Range: ${startDateStr} to ${endDateStr}`, 14, 28);
+      doc.text(`Total Todos: ${filteredTodos.length}`, 14, 34);
+
+      // Prepare table data
+      const tableData = filteredTodos.map((todo) => [
+        todo.title,
+        todo.description || "",
+        todo.is_completed ? "Completed" : "Pending",
+        new Date(todo.createdAt).toLocaleDateString(),
+      ]);
+
+      // Add table
+      autoTable(doc, {
+        head: [["Title", "Description", "Status", "Created At"]],
+        body: tableData,
+        startY: 40,
+        styles: {
+          fontSize: 10,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [124, 58, 237],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+      });
+
+      // Save the PDF
+      doc.save(`todos_${startDateStr}_to_${endDateStr}.pdf`);
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      alert("Failed to export to PDF");
     }
   };
 
@@ -126,13 +183,22 @@ export default function Reports() {
                 List
               </Button>
               {showDateRangeResults && filteredTodos.length > 0 && (
-                <Button
-                  variant="contained"
-                  startIcon={<FileDownloadIcon />}
-                  onClick={handleExportToExcel}
-                >
-                  Export to Excel
-                </Button>
+                <>
+                  <Button
+                    variant="contained"
+                    startIcon={<FileDownloadIcon />}
+                    onClick={handleExportToExcel}
+                  >
+                    Export to Excel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<PictureAsPdfIcon />}
+                    onClick={handleExportToPDF}
+                  >
+                    Export to PDF
+                  </Button>
+                </>
               )}
             </Stack>
           </Stack>
@@ -149,7 +215,12 @@ export default function Reports() {
               borderColor: "divider",
             }}
           >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ mb: 2 }}
+            >
               <Typography variant="h6" fontWeight={700}>
                 Date Range Results
               </Typography>
@@ -173,7 +244,11 @@ export default function Reports() {
                   >
                     <Typography fontWeight={700}>{todo.title}</Typography>
                     {todo.description && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.5 }}
+                      >
                         {todo.description}
                       </Typography>
                     )}
